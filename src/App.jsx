@@ -1,6 +1,6 @@
 // Author: Gavriel Theofilus Nugroho
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const CATEGORIES = [
   'Makanan',
@@ -56,204 +56,17 @@ const NAME_TO_CATEGORY = {
   'Cashback': 'Cashback'
 };
 
-const MOCK_DATA_FALLBACK = {
-  'Tampungan': { type: 'debet', amount: 3200000, desc: 'Lunas titipan Sephora' },
-  'Singgahan': { type: 'kredit', amount: 30000, desc: 'Kartu data lokal' },
-  'Set 5 mybca': { type: 'debet', amount: 5000000, desc: 'Transfer modal SG' },
-  'Set 4 mybca': { type: 'debet', amount: 4200000, desc: 'Pembayaran pesanan batch 4' },
-  'Set 5': { type: 'debet', amount: 3500000, desc: 'Modal masuk cash' },
-  'Set 4': { type: 'debet', amount: 2800000, desc: 'Modal masuk cash batch 4' },
-  'Set 3': { type: 'debet', amount: 3000000, desc: 'Modal masuk cash batch 3' },
-  'Set 2': { type: 'debet', amount: 2500000, desc: 'Modal masuk cash batch 2' },
-  'Satuan': { type: 'debet', amount: 750000, desc: 'Titipan eceran transfer' },
-  'Satuan mybca': { type: 'debet', amount: 900000, desc: 'Titipan eceran via BCA' },
-  'Hp': { type: 'kredit', amount: 1800000, desc: 'Pesanan HP Jastip' },
-  'Tiket 1': { type: 'kredit', amount: 1200000, desc: 'Akses penerbangan Scoot' },
-  'Tiket 2': { type: 'kredit', amount: 1500000, desc: 'Akses penerbangan Garuda' },
-  'Taxi': { type: 'kredit', amount: 75000, desc: 'Transportasi Orchard' },
-  'Indonesia': { type: 'kredit', amount: 50000, desc: 'Pengiriman paket domestik' },
-  'Malaysia': { type: 'kredit', amount: 45000, desc: 'Makan siang tim runner' },
-  'Wakanda': { type: 'kredit', amount: 450000, desc: 'Titipan souvenir lokal' },
-  'Dll': { type: 'kredit', amount: 25000, desc: 'Biaya transfer bank' },
-  'Cashback': { type: 'debet', amount: 80000, desc: 'Klaim refund bagasi Changi' }
-};
-
-const INITIAL_TRANSACTIONS = [
-  {
-    id: '1',
-    date: '2026-05-27',
-    name: 'Tampungan',
-    category: 'Modal',
-    type: 'debet',
-    amount: 3200000,
-    description: 'Lunas titipan Sephora SG',
-    client: 'Budi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '2',
-    date: '2026-05-27',
-    name: 'Hp',
-    category: 'Belanja',
-    type: 'kredit',
-    amount: 1800000,
-    description: 'Pesanan HP Jastip',
-    client: 'Siti',
-    event: 'Jastip JP Juni'
-  },
-  {
-    id: '3',
-    date: '2026-05-27',
-    name: 'Taxi',
-    category: 'Transportasi',
-    type: 'kredit',
-    amount: 75000,
-    description: 'Transportasi keliling Orchard',
-    client: 'Andi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '4',
-    date: '2026-05-27',
-    name: 'Malaysia',
-    category: 'Makanan',
-    type: 'kredit',
-    amount: 45000,
-    description: 'Makan siang tim runner',
-    client: 'Dewi',
-    event: 'Jastip BKK Juli'
-  },
-  {
-    id: '5',
-    date: '2026-05-26',
-    name: 'Set 5 mybca',
-    category: 'Modal',
-    type: 'debet',
-    amount: 5000000,
-    description: 'Transfer modal',
-    client: 'Budi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '6',
-    date: '2026-05-26',
-    name: 'Tiket 1',
-    category: 'Tiket',
-    type: 'kredit',
-    amount: 1200000,
-    description: 'Akses penerbangan',
-    client: 'Andi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '7',
-    date: '2026-05-26',
-    name: 'Singgahan',
-    category: 'Lain-lain',
-    type: 'kredit',
-    amount: 30000,
-    description: 'Kartu data lokal',
-    client: 'Siti',
-    event: 'Jastip JP Juni'
-  },
-  {
-    id: '8',
-    date: '2026-05-26',
-    name: 'Cashback',
-    category: 'Cashback',
-    type: 'debet',
-    amount: 80000,
-    description: 'Klaim refund sewa bagasi',
-    client: 'Budi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '9',
-    date: '2026-05-25',
-    name: 'Wakanda',
-    category: 'Belanja',
-    type: 'kredit',
-    amount: 450000,
-    description: 'Titipan souvenir lokal',
-    client: 'Dewi',
-    event: 'Jastip BKK Juli'
-  },
-  {
-    id: '10',
-    date: '2026-05-25',
-    name: 'Indonesia',
-    category: 'Transportasi',
-    type: 'kredit',
-    amount: 50000,
-    description: 'Pengiriman paket domestik',
-    client: 'Andi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '11',
-    date: '2026-05-25',
-    name: 'Cashback',
-    category: 'Cashback',
-    type: 'debet',
-    amount: 150000,
-    description: 'Cashback promo tiket penerbangan',
-    client: 'Dewi',
-    event: 'Jastip BKK Juli'
-  },
-  {
-    id: '12',
-    date: '2026-05-25',
-    name: 'Dll',
-    category: 'Lain-lain',
-    type: 'kredit',
-    amount: 25000,
-    description: 'Biaya transfer antar bank',
-    client: 'Budi',
-    event: 'Jastip SG Mei'
-  },
-  {
-    id: '13',
-    date: '2026-05-24',
-    name: 'Singgahan',
-    category: 'Lain-lain',
-    type: 'kredit',
-    amount: 1000000,
-    description: 'Kas tunai darurat Singapura',
-    client: 'Siti',
-    event: 'Jastip JP Juni'
-  },
-  {
-    id: '14',
-    date: '2026-05-24',
-    name: 'Set 4 mybca',
-    category: 'Modal',
-    type: 'debet',
-    amount: 4200000,
-    description: 'Pembayaran pesanan batch 4',
-    client: 'Siti',
-    event: 'Jastip JP Juni'
-  }
-];
-
 function App() {
-  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
-  const [groupBy, setGroupBy] = useState('date'); // 'date' | 'client' | 'event'
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [filterCategory, setFilterCategory] = useState('Semua');
-  const [filterClient, setFilterClient] = useState('Semua');
-  const [filterEvent, setFilterEvent] = useState('Semua');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupBy, setGroupBy] = useState('date'); // 'date' | 'event'
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [isNewClient, setIsNewClient] = useState(false);
-  const [isNewEvent, setIsNewEvent] = useState(false);
-  const [customClient, setCustomClient] = useState('');
-  const [customEvent, setCustomEvent] = useState('');
-
-  // Extract unique clients and events from actual transactions
-  const uniqueClients = Array.from(new Set(transactions.map(t => t.client || 'Umum'))).filter(Boolean);
-  const uniqueEvents = Array.from(new Set(transactions.map(t => t.event || 'Umum'))).filter(Boolean);
+  const [editingTransaction, setEditingTransaction] = useState(null); // null for add, object for edit
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -262,11 +75,32 @@ function App() {
     type: 'debet',
     amount: '',
     description: '',
-    client: 'Budi',
-    event: 'Jastip SG Mei'
+    event: ''
   });
 
   const groupsPerPage = 3; // Menampilkan 3 grup per halaman untuk pagination
+
+  // Fetch transactions on load
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/transaksi');
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data || []);
+      } else {
+        console.error('Gagal memuat transaksi');
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   // Rupiah Formatter
   const formatRupiah = (value) => {
@@ -293,18 +127,15 @@ function App() {
   // Reset all filters
   const handleResetFilters = () => {
     setFilterCategory('Semua');
-    setFilterClient('Semua');
-    setFilterEvent('Semua');
     setStartDate('');
     setEndDate('');
+    setSearchQuery('');
     setCurrentPage(1);
   };
 
   // Filter logic
   const filteredTransactions = transactions.filter((tx) => {
     const categoryMatch = filterCategory === 'Semua' || tx.category === filterCategory;
-    const clientMatch = filterClient === 'Semua' || (tx.client || 'Umum') === filterClient;
-    const eventMatch = filterEvent === 'Semua' || (tx.event || 'Umum') === filterEvent;
     
     let dateMatch = true;
     if (startDate) {
@@ -314,20 +145,21 @@ function App() {
       dateMatch = dateMatch && tx.date <= endDate;
     }
 
-    return categoryMatch && clientMatch && eventMatch && dateMatch;
-  });
-
-  // Group by date / client / event
-  const groupedTransactions = filteredTransactions.reduce((acc, tx) => {
-    let key;
-    if (groupBy === 'client') {
-      key = tx.client || 'Umum';
-    } else if (groupBy === 'event') {
-      key = tx.event || 'Umum';
-    } else {
-      key = tx.date;
+    let searchMatch = true;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const nameMatch = tx.name?.toLowerCase().includes(q);
+      const catMatch = tx.category?.toLowerCase().includes(q);
+      const descMatch = tx.description?.toLowerCase().includes(q);
+      searchMatch = nameMatch || catMatch || descMatch;
     }
 
+    return categoryMatch && dateMatch && searchMatch;
+  });
+
+  // Group by date or event
+  const groupedTransactions = filteredTransactions.reduce((acc, tx) => {
+    const key = groupBy === 'event' ? (tx.event || 'Umum') : tx.date;
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -371,12 +203,9 @@ function App() {
 
   const globalNetBalance = globalTotalDebet - globalTotalKredit;
 
-  // Helper to open modal with resets
+  // Helper to open modal for adding new transaction
   const handleOpenModal = () => {
-    setIsNewClient(false);
-    setIsNewEvent(false);
-    setCustomClient('');
-    setCustomEvent('');
+    setEditingTransaction(null);
     setFormData({
       date: new Date().toISOString().split('T')[0],
       name: 'Tampungan',
@@ -384,14 +213,48 @@ function App() {
       type: 'debet',
       amount: '',
       description: '',
-      client: uniqueClients[0] || 'Umum',
-      event: uniqueEvents[0] || 'Umum'
+      event: ''
     });
     setIsModalOpen(true);
   };
 
-  // Handle Form Submission
-  const handleSubmit = (e) => {
+  // Helper to open modal for editing
+  const handleEditClick = (tx) => {
+    setEditingTransaction(tx);
+    setFormData({
+      date: tx.date,
+      name: tx.name,
+      category: tx.category,
+      type: tx.type,
+      amount: tx.amount.toString(),
+      description: tx.description || '',
+      event: tx.event || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  // Helper to delete transaction
+  const handleDeleteClick = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+      try {
+        const response = await fetch(`/api/transaksi?id=${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          setTransactions((prev) => prev.filter((t) => t.id !== id));
+        } else {
+          alert('Gagal menghapus transaksi dari database');
+        }
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('Terjadi kesalahan koneksi saat menghapus transaksi.');
+      }
+    }
+  };
+
+  // Handle Form Submission (POST for new / PUT for edit)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name) {
       alert('Mohon pilih Nama Transaksi');
@@ -403,49 +266,61 @@ function App() {
       return;
     }
 
-    const clientVal = isNewClient ? customClient.trim() : formData.client;
-    const eventVal = isNewEvent ? customEvent.trim() : formData.event;
+    const eventVal = formData.event.trim() || 'Umum';
 
-    if (isNewClient && !customClient.trim()) {
-      alert('Mohon masukkan nama client baru');
-      return;
-    }
-    if (isNewEvent && !customEvent.trim()) {
-      alert('Mohon masukkan nama event baru');
-      return;
-    }
-
-    const newTx = {
-      id: Date.now().toString(),
+    const payload = {
       date: formData.date,
       name: formData.name,
       category: formData.category,
       type: formData.type,
       amount: amountVal,
       description: formData.description.trim(),
-      client: clientVal || 'Umum',
-      event: eventVal || 'Umum'
+      event: eventVal
     };
 
-    setTransactions([newTx, ...transactions]);
-    setIsModalOpen(false);
-    setCurrentPage(1); // Reset ke halaman 1 agar transaksi baru terlihat
+    try {
+      if (editingTransaction) {
+        // Mode Edit: PUT Request
+        const response = await fetch('/api/transaksi', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...payload, id: editingTransaction.id })
+        });
 
-    // Reset Form
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      name: 'Tampungan',
-      category: 'Modal',
-      type: 'debet',
-      amount: '',
-      description: '',
-      client: uniqueClients[0] || 'Umum',
-      event: uniqueEvents[0] || 'Umum'
-    });
-    setIsNewClient(false);
-    setIsNewEvent(false);
-    setCustomClient('');
-    setCustomEvent('');
+        if (response.ok) {
+          const updatedTx = await response.json();
+          setTransactions((prev) =>
+            prev.map((t) => (t.id === updatedTx.id ? updatedTx : t))
+          );
+          setIsModalOpen(false);
+        } else {
+          alert('Gagal memperbarui transaksi');
+        }
+      } else {
+        // Mode Tambah: POST Request
+        const response = await fetch('/api/transaksi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 201) {
+          const newCreatedTx = await response.json();
+          setTransactions((prev) => [newCreatedTx, ...prev]);
+          setIsModalOpen(false);
+          setCurrentPage(1); // Reset ke halaman 1 agar data baru terlihat
+        } else {
+          alert('Gagal menyimpan transaksi baru');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Terjadi kesalahan koneksi saat menyimpan transaksi.');
+    }
   };
 
   // Helper to format Date header
@@ -464,18 +339,11 @@ function App() {
     }
   };
 
-  // Helper to format Group Header
   const formatGroupHeader = (key) => {
-    if (groupBy === 'date') {
-      return formatDateHeader(key);
-    }
-    if (groupBy === 'client') {
-      return `Client: ${key}`;
-    }
     if (groupBy === 'event') {
       return `Event: ${key}`;
     }
-    return key;
+    return formatDateHeader(key);
   };
 
   return (
@@ -519,7 +387,7 @@ function App() {
         {/* Statistics Cards */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Card 1: Saldo Bersih */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Saldo Bersih (Netto)
             </p>
@@ -535,7 +403,7 @@ function App() {
           </div>
 
           {/* Card 2: Total Debet */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Total Debet (Uang Masuk)
             </p>
@@ -548,7 +416,7 @@ function App() {
           </div>
 
           {/* Card 3: Total Kredit */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Total Kredit (Uang Keluar)
             </p>
@@ -561,12 +429,30 @@ function App() {
           </div>
         </section>
 
-        {/* Toolbar - Filters & Action Buttons */}
+        {/* Toolbar - Filters, Search & Action Buttons */}
         <section className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             
-            {/* Filter Group */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 flex-1">
+            {/* Filter Group with Search */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+              {/* Global Search Bar */}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="searchBar" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Cari Transaksi
+                </label>
+                <input
+                  id="searchBar"
+                  type="text"
+                  placeholder="Cari nama, kategori, ket..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5"
+                />
+              </div>
+
               {/* Category Filter */}
               <div className="flex flex-col gap-1">
                 <label htmlFor="categoryFilter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -579,58 +465,12 @@ function App() {
                     setFilterCategory(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 font-medium transition cursor-pointer"
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 font-medium cursor-pointer"
                 >
                   <option value="Semua">Semua Kategori</option>
                   {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Client Filter */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="clientFilter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Client
-                </label>
-                <select
-                  id="clientFilter"
-                  value={filterClient}
-                  onChange={(e) => {
-                    setFilterClient(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 font-medium transition cursor-pointer"
-                >
-                  <option value="Semua">Semua Client</option>
-                  {uniqueClients.map((client) => (
-                    <option key={client} value={client}>
-                      {client}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Event Filter */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="eventFilter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Event
-                </label>
-                <select
-                  id="eventFilter"
-                  value={filterEvent}
-                  onChange={(e) => {
-                    setFilterEvent(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 font-medium transition cursor-pointer"
-                >
-                  <option value="Semua">Semua Event</option>
-                  {uniqueEvents.map((ev) => (
-                    <option key={ev} value={ev}>
-                      {ev}
                     </option>
                   ))}
                 </select>
@@ -649,7 +489,7 @@ function App() {
                     setStartDate(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 transition"
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5"
                 />
               </div>
 
@@ -666,17 +506,17 @@ function App() {
                     setEndDate(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 transition"
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5"
                 />
               </div>
             </div>
 
             {/* Actions (Reset & Add) */}
             <div className="flex items-end justify-start sm:justify-end gap-2.5 pt-2 lg:pt-0">
-              {(filterCategory !== 'Semua' || filterClient !== 'Semua' || filterEvent !== 'Semua' || startDate || endDate) && (
+              {(filterCategory !== 'Semua' || startDate || endDate || searchQuery) && (
                 <button
                   onClick={handleResetFilters}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-lg transition"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-lg"
                 >
                   Clear Filter
                 </button>
@@ -684,7 +524,7 @@ function App() {
               
               <button
                 onClick={handleOpenModal}
-                className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition shadow-sm active:scale-[0.98] w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm active:scale-[0.98] w-full sm:w-auto"
               >
                 <svg
                   className="w-4 h-4"
@@ -711,21 +551,14 @@ function App() {
         <div className="flex border-b border-slate-200 gap-6 mt-2 mb-1 px-1">
           <button
             onClick={() => { setGroupBy('date'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-semibold transition relative ${groupBy === 'date' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-sm font-semibold relative ${groupBy === 'date' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
           >
             Per Hari (Tanggal)
             {groupBy === 'date' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>}
           </button>
           <button
-            onClick={() => { setGroupBy('client'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-semibold transition relative ${groupBy === 'client' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Per Client
-            {groupBy === 'client' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>}
-          </button>
-          <button
             onClick={() => { setGroupBy('event'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-semibold transition relative ${groupBy === 'event' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-sm font-semibold relative ${groupBy === 'event' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
           >
             Per Event
             {groupBy === 'event' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>}
@@ -734,7 +567,11 @@ function App() {
 
         {/* Ledger Tables Section */}
         <section className="flex flex-col gap-6">
-          {paginatedGroupKeys.length === 0 ? (
+          {isLoading ? (
+            <div className="bg-white text-center py-16 px-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+              <p className="text-slate-500 text-sm font-medium">Memuat data transaksi...</p>
+            </div>
+          ) : paginatedGroupKeys.length === 0 ? (
             <div className="bg-white text-center py-16 px-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
               <svg
                 className="w-14 h-14 text-slate-300 mb-3"
@@ -758,25 +595,30 @@ function App() {
               </p>
               <button
                 onClick={handleResetFilters}
-                className="mt-4 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-md bg-slate-50 transition"
+                className="mt-4 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-md bg-slate-50"
               >
                 Reset Semua Filter
               </button>
             </div>
           ) : (
             paginatedGroupKeys.map((groupKey) => {
-              const groupTransactions = groupedTransactions[groupKey];
+              const groupTransactions = groupedTransactions[groupKey] || [];
               
+              // Sort within group
+              const rowsToRender = [...groupTransactions].sort((a, b) => {
+                return TRANSACTION_NAMES.indexOf(a.name) - TRANSACTION_NAMES.indexOf(b.name);
+              });
+
               // Calculate group total debet, kredit, and net balance
-              const groupDebet = groupTransactions
-                .filter((t) => t.type === 'debet')
-                .reduce((sum, t) => sum + t.amount, 0);
+              const calculatedDebet = rowsToRender
+                .filter((r) => r.type === 'debet')
+                .reduce((sum, r) => sum + r.amount, 0);
 
-              const groupKredit = groupTransactions
-                .filter((t) => t.type === 'kredit')
-                .reduce((sum, t) => sum + t.amount, 0);
+              const calculatedKredit = rowsToRender
+                .filter((r) => r.type === 'kredit')
+                .reduce((sum, r) => sum + r.amount, 0);
 
-              const groupNet = groupDebet - groupKredit;
+              const calculatedNet = calculatedDebet - calculatedKredit;
 
               return (
                 <div key={groupKey} className="flex flex-col gap-2.5">
@@ -794,119 +636,74 @@ function App() {
                       <thead>
                         <tr className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/4">Nama Transaksi</th>
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/5">Kategori</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/6">Kategori</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/6">Debet (Masuk)</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/6">Kredit (Keluar)</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0">Keterangan</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-center w-28">Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(() => {
-                          const rowsToRender = [];
-                          TRANSACTION_NAMES.forEach((name) => {
-                            if (filterCategory !== 'Semua' && NAME_TO_CATEGORY[name] !== filterCategory) {
-                              return;
-                            }
-                            const matches = groupTransactions.filter(t => t.name === name);
-                            if (matches.length > 0) {
-                              matches.forEach((tx) => {
-                                rowsToRender.push({
-                                  id: tx.id,
-                                  isPlaceholder: false,
-                                  name: tx.name,
-                                  category: tx.category,
-                                  type: tx.type,
-                                  amount: tx.amount,
-                                  description: tx.description,
-                                  date: tx.date,
-                                  client: tx.client,
-                                  event: tx.event
-                                });
-                              });
-                            } else {
-                              const mock = MOCK_DATA_FALLBACK[name];
-                              rowsToRender.push({
-                                id: `placeholder-${name}`,
-                                isPlaceholder: true,
-                                name: name,
-                                category: NAME_TO_CATEGORY[name],
-                                type: mock.type,
-                                amount: mock.amount,
-                                description: mock.desc,
-                                date: groupBy === 'date' ? groupKey : '2026-05-27',
-                                client: groupBy === 'client' ? groupKey : 'Budi',
-                                event: groupBy === 'event' ? groupKey : 'Jastip SG Mei'
-                              });
-                            }
-                          });
+                        {rowsToRender.map((row) => (
+                          <tr key={row.id} className="hover:bg-slate-50/50">
+                            <td className="px-4 py-2 text-sm font-medium text-slate-900 border-r border-b border-slate-200 last:border-r-0">
+                              {row.name}
+                            </td>
+                            <td className="px-4 py-2 text-sm border-r border-b border-slate-200 last:border-r-0">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-600">
+                                {row.category}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-sm text-right font-mono font-medium text-emerald-600 border-r border-b border-slate-200 last:border-r-0">
+                              {row.type === 'debet' ? formatCellAmount(row.amount) : '-'}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-right font-mono font-medium text-rose-600 border-r border-b border-slate-200 last:border-r-0">
+                              {row.type === 'kredit' ? formatCellAmount(row.amount) : '-'}
+                            </td>
+                            <td className="px-4 py-2 text-xs text-slate-500 italic border-b border-slate-200 last:border-r-0">
+                              {row.description || '-'}
+                            </td>
+                            <td className="px-4 py-2 text-xs border-b border-slate-200 last:border-r-0 text-center">
+                              <button
+                                onClick={() => handleEditClick(row)}
+                                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded cursor-pointer mr-1.5"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(row.id)}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded cursor-pointer"
+                              >
+                                Hapus
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
 
-                          // Recalculate group total debet, kredit, and net balance to include the mock rows
-                          const calculatedDebet = rowsToRender
-                            .filter((r) => r.type === 'debet')
-                            .reduce((sum, r) => sum + r.amount, 0);
+                        {/* Daily Total Row */}
+                        <tr className="bg-slate-100/40 font-semibold border-b border-slate-200">
+                          <td colSpan="2" className="px-4 py-2 text-sm text-slate-700">
+                            {groupBy === 'event' ? 'Total Event' : 'Total Harian'}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-right font-mono text-emerald-700">
+                            {formatCellAmount(calculatedDebet)}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-right font-mono text-rose-700">
+                            {formatCellAmount(calculatedKredit)}
+                          </td>
+                          <td colSpan="2" className="px-4 py-2"></td>
+                        </tr>
 
-                          const calculatedKredit = rowsToRender
-                            .filter((r) => r.type === 'kredit')
-                            .reduce((sum, r) => sum + r.amount, 0);
-
-                          const calculatedNet = calculatedDebet - calculatedKredit;
-
-                          return (
-                            <>
-                              {rowsToRender.map((row) => (
-                                <tr key={row.id} className="hover:bg-slate-50/50 transition">
-                                  <td className="px-4 py-2 text-sm font-medium text-slate-900 border-r border-b border-slate-200 last:border-r-0">
-                                    <div>{row.name}</div>
-                                    <div className="flex flex-wrap gap-1 mt-1 text-[10px] font-normal text-slate-400">
-                                      {groupBy !== 'date' && <span className="bg-slate-100 px-1 py-0.5 rounded">{row.date}</span>}
-                                      {groupBy !== 'client' && <span className="bg-slate-100 px-1 py-0.5 rounded">Client: {row.client}</span>}
-                                      {groupBy !== 'event' && <span className="bg-slate-100 px-1 py-0.5 rounded">Event: {row.event}</span>}
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-2 text-sm border-r border-b border-slate-200 last:border-r-0">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-600">
-                                      {row.category}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-2 text-sm text-right font-mono font-medium text-emerald-600 border-r border-b border-slate-200 last:border-r-0">
-                                    {row.type === 'debet' ? formatCellAmount(row.amount) : '-'}
-                                  </td>
-                                  <td className="px-4 py-2 text-sm text-right font-mono font-medium text-rose-600 border-r border-b border-slate-200 last:border-r-0">
-                                    {row.type === 'kredit' ? formatCellAmount(row.amount) : '-'}
-                                  </td>
-                                  <td className="px-4 py-2 text-xs text-slate-500 italic border-b border-slate-200 last:border-r-0">
-                                    {row.description || '-'}
-                                  </td>
-                                </tr>
-                              ))}
-
-                              {/* Daily Total Row */}
-                              <tr className="bg-slate-100/40 font-semibold border-b border-slate-200">
-                                <td colSpan="2" className="px-4 py-2 text-sm text-slate-700">
-                                  {groupBy === 'date' ? 'Total Harian' : groupBy === 'client' ? 'Total Client' : 'Total Event'}
-                                </td>
-                                <td className="px-4 py-2 text-sm text-right font-mono text-emerald-700">
-                                  {formatCellAmount(calculatedDebet)}
-                                </td>
-                                <td className="px-4 py-2 text-sm text-right font-mono text-rose-700">
-                                  {formatCellAmount(calculatedKredit)}
-                                </td>
-                                <td className="px-4 py-2"></td>
-                              </tr>
-
-                              {/* Daily Netto (Saldo Bersih Harian) */}
-                              <tr className="bg-slate-50/70 border-b border-slate-200 text-xs font-semibold">
-                                <td colSpan="2" className="px-4 py-2.5 text-slate-500 uppercase tracking-wider">
-                                  {groupBy === 'date' ? 'Netto Harian (Selisih)' : groupBy === 'client' ? 'Netto Client (Selisih)' : 'Netto Event (Selisih)'}
-                                </td>
-                                <td colSpan="2" className={`px-4 py-2.5 text-center font-mono text-sm font-bold ${calculatedNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                  {calculatedNet >= 0 ? '+' : ''}{formatRupiah(calculatedNet)} ({calculatedNet >= 0 ? 'Surplus' : 'Defisit'})
-                                </td>
-                                <td className="px-4 py-2.5"></td>
-                              </tr>
-                            </>
-                          );
-                        })()}
+                        {/* Daily Netto (Saldo Bersih Harian) */}
+                        <tr className="bg-slate-50/70 border-b border-slate-200 text-xs font-semibold">
+                          <td colSpan="2" className="px-4 py-2.5 text-slate-500 uppercase tracking-wider">
+                            {groupBy === 'event' ? 'Netto Event (Selisih)' : 'Netto Harian (Selisih)'}
+                          </td>
+                          <td colSpan="2" className={`px-4 py-2.5 text-center font-mono text-sm font-bold ${calculatedNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {calculatedNet >= 0 ? '+' : ''}{formatRupiah(calculatedNet)} ({calculatedNet >= 0 ? 'Surplus' : 'Defisit'})
+                          </td>
+                          <td colSpan="2" className="px-4 py-2.5"></td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -917,17 +714,17 @@ function App() {
         </section>
 
         {/* Pagination Navigation */}
-        {sortedGroupKeys.length > 0 && (
+        {!isLoading && sortedGroupKeys.length > 0 && (
           <section className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
             <p className="text-xs text-slate-500 font-medium">
-              Menampilkan {groupBy === 'date' ? 'tanggal' : groupBy === 'client' ? 'client' : 'event'} <span className="font-semibold text-slate-700">{indexOfFirstGroup + 1}</span> - <span className="font-semibold text-slate-700">{Math.min(indexOfLastGroup, sortedGroupKeys.length)}</span> dari <span className="font-semibold text-slate-700">{sortedGroupKeys.length}</span> {groupBy === 'date' ? 'hari' : groupBy === 'client' ? 'client' : 'event'} terdaftar
+              Menampilkan {groupBy === 'event' ? 'event' : 'tanggal'} <span className="font-semibold text-slate-700">{indexOfFirstGroup + 1}</span> - <span className="font-semibold text-slate-700">{Math.min(indexOfLastGroup, sortedGroupKeys.length)}</span> dari <span className="font-semibold text-slate-700">{sortedGroupKeys.length}</span> {groupBy === 'event' ? 'event' : 'hari'} terdaftar
             </p>
             
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md transition"
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md"
               >
                 Sebelumnya
               </button>
@@ -937,7 +734,7 @@ function App() {
                   <button
                     key={idx + 1}
                     onClick={() => setCurrentPage(idx + 1)}
-                    className={`w-7 h-7 text-xs font-semibold rounded-md flex items-center justify-center transition ${currentPage === idx + 1 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className={`w-7 h-7 text-xs font-semibold rounded-md flex items-center justify-center ${currentPage === idx + 1 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
                   >
                     {idx + 1}
                   </button>
@@ -947,7 +744,7 @@ function App() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md transition"
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md"
               >
                 Selanjutnya
               </button>
@@ -959,16 +756,16 @@ function App() {
       {/* Pop-up Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden transform transition-all">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden transform">
             
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
-                Tambah Transaksi Jastip
+                {editingTransaction ? 'Edit Transaksi Jastip' : 'Tambah Transaksi Jastip'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 transition"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <svg
                   className="w-5 h-5"
@@ -1061,79 +858,19 @@ function App() {
                 </div>
               </div>
 
-              {/* Grid: Client & Event */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Client Select */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Client
-                  </label>
-                  <select
-                    value={isNewClient ? 'NEW' : formData.client}
-                    onChange={(e) => {
-                      if (e.target.value === 'NEW') {
-                        setIsNewClient(true);
-                      } else {
-                        setIsNewClient(false);
-                        setFormData({ ...formData, client: e.target.value });
-                      }
-                    }}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
-                  >
-                    {uniqueClients.map((client) => (
-                      <option key={client} value={client}>
-                        {client}
-                      </option>
-                    ))}
-                    <option value="NEW">+ Tambah Baru...</option>
-                  </select>
-                  {isNewClient && (
-                    <input
-                      type="text"
-                      required
-                      placeholder="Nama Client Baru"
-                      value={customClient}
-                      onChange={(e) => setCustomClient(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg mt-2 p-2.5 focus:ring-slate-400 focus:border-slate-400"
-                    />
-                  )}
-                </div>
-
-                {/* Event Select */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Event
-                  </label>
-                  <select
-                    value={isNewEvent ? 'NEW' : formData.event}
-                    onChange={(e) => {
-                      if (e.target.value === 'NEW') {
-                        setIsNewEvent(true);
-                      } else {
-                        setIsNewEvent(false);
-                        setFormData({ ...formData, event: e.target.value });
-                      }
-                    }}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
-                  >
-                    {uniqueEvents.map((ev) => (
-                      <option key={ev} value={ev}>
-                        {ev}
-                      </option>
-                    ))}
-                    <option value="NEW">+ Tambah Baru...</option>
-                  </select>
-                  {isNewEvent && (
-                    <input
-                      type="text"
-                      required
-                      placeholder="Nama Event Baru"
-                      value={customEvent}
-                      onChange={(e) => setCustomEvent(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg mt-2 p-2.5 focus:ring-slate-400 focus:border-slate-400"
-                    />
-                  )}
-                </div>
+              {/* Event Input */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Event
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Misal: Jastip SG Mei"
+                  value={formData.event}
+                  onChange={(e) => setFormData({ ...formData, event: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                />
               </div>
 
               {/* Nominal */}
@@ -1170,15 +907,15 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs px-4 py-2.5 rounded-lg transition"
+                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs px-4 py-2.5 rounded-lg"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg transition active:scale-[0.98]"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
                 >
-                  Simpan Transaksi
+                  {editingTransaction ? 'Simpan Perubahan' : 'Simpan Transaksi'}
                 </button>
               </div>
             </form>
