@@ -38,10 +38,10 @@ export default async function handler(req, res) {
     // HTTP POST - Add a new transaction (Single or Bulk)
     if (req.method === 'POST') {
       if (Array.isArray(req.body)) {
-        // Bulk Insert validation
+        // Bulk Insert validation (omitting category)
         for (const item of req.body) {
-          const { date, event, name, category, type, amount } = item;
-          if (!date || !event || !name || !category || !type || amount === undefined) {
+          const { date, event, name, type, amount } = item;
+          if (!date || !event || !name || !type || amount === undefined) {
             return res.status(400).json({ error: 'Data tidak lengkap untuk salah satu transaksi dalam batch' });
           }
         }
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
           const { date, event, name, category, type, amount, description } = item;
           const result = await sql`
             INSERT INTO transaksi (tanggal, event, nama_transaksi, kategori, jenis, nominal, keterangan)
-            VALUES (${date}, ${event}, ${name}, ${category}, ${type}, ${amount}, ${description || ''})
+            VALUES (${date}, ${event}, ${name}, ${category || '-'}, ${type}, ${amount}, ${description || ''})
             RETURNING *
           `;
           return {
@@ -69,14 +69,14 @@ export default async function handler(req, res) {
         const createdItems = await Promise.all(insertPromises);
         return res.status(201).json(createdItems);
       } else {
-        // Single Insert
+        // Single Insert (omitting category validation)
         const { date, event, name, category, type, amount, description } = req.body;
-        if (!date || !event || !name || !category || !type || amount === undefined) {
+        if (!date || !event || !name || !type || amount === undefined) {
           return res.status(400).json({ error: 'Data tidak lengkap untuk menambahkan transaksi' });
         }
         const result = await sql`
           INSERT INTO transaksi (tanggal, event, nama_transaksi, kategori, jenis, nominal, keterangan)
-          VALUES (${date}, ${event}, ${name}, ${category}, ${type}, ${amount}, ${description || ''})
+          VALUES (${date}, ${event}, ${name}, ${category || '-'}, ${type}, ${amount}, ${description || ''})
           RETURNING *
         `;
         const created = {
@@ -93,10 +93,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // HTTP PUT - Update an existing transaction
+    // HTTP PUT - Update an existing transaction (omitting category validation)
     if (req.method === 'PUT') {
       const { id, date, event, name, category, type, amount, description } = req.body;
-      if (!id || !date || !event || !name || !category || !type || amount === undefined) {
+      if (!id || !date || !event || !name || !type || amount === undefined) {
         return res.status(400).json({ error: 'Data tidak lengkap untuk memperbarui transaksi' });
       }
       const result = await sql`
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
         SET tanggal = ${date},
             event = ${event},
             nama_transaksi = ${name},
-            kategori = ${category},
+            kategori = ${category || '-'},
             jenis = ${type},
             nominal = ${amount},
             keterangan = ${description || ''}

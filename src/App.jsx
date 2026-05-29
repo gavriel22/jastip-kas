@@ -1,16 +1,6 @@
 
 import { useState, useEffect } from 'react';
 
-const CATEGORIES = [
-  'Makanan',
-  'Transportasi',
-  'Belanja',
-  'Tiket',
-  'Modal',
-  'Cashback',
-  'Lain-lain'
-];
-
 const TRANSACTION_NAMES = [
   'Tampungan',
   'Singgahan',
@@ -33,32 +23,9 @@ const TRANSACTION_NAMES = [
   'Cashback'
 ];
 
-const NAME_TO_CATEGORY = {
-  'Tampungan': 'Modal',
-  'Singgahan': 'Lain-lain',
-  'Set 5 mybca': 'Modal',
-  'Set 4 mybca': 'Modal',
-  'Set 5': 'Modal',
-  'Set 4': 'Modal',
-  'Set 3': 'Modal',
-  'Set 2': 'Modal',
-  'Satuan': 'Lain-lain',
-  'Satuan mybca': 'Lain-lain',
-  'Hp': 'Belanja',
-  'Tiket 1': 'Tiket',
-  'Tiket 2': 'Tiket',
-  'Taxi': 'Transportasi',
-  'Indonesia': 'Transportasi',
-  'Malaysia': 'Makanan',
-  'Wakanda': 'Belanja',
-  'Dll': 'Lain-lain',
-  'Cashback': 'Cashback'
-};
-
 function App() {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [filterCategory, setFilterCategory] = useState('Semua');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,17 +96,14 @@ function App() {
 
   // Reset all filters
   const handleResetFilters = () => {
-    setFilterCategory('Semua');
     setStartDate('');
     setEndDate('');
     setSearchQuery('');
     setCurrentPage(1);
   };
 
-  // Filter logic
+  // Filter logic (Event search specific)
   const filteredTransactions = transactions.filter((tx) => {
-    const categoryMatch = filterCategory === 'Semua' || tx.category === filterCategory;
-    
     let dateMatch = true;
     if (startDate) {
       dateMatch = dateMatch && tx.date >= startDate;
@@ -151,14 +115,10 @@ function App() {
     let searchMatch = true;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      const eventMatch = tx.event?.toLowerCase().includes(q);
-      const nameMatch = tx.name?.toLowerCase().includes(q);
-      const catMatch = tx.category?.toLowerCase().includes(q);
-      const descMatch = tx.description?.toLowerCase().includes(q);
-      searchMatch = eventMatch || nameMatch || catMatch || descMatch;
+      searchMatch = tx.event?.toLowerCase().includes(q);
     }
 
-    return categoryMatch && dateMatch && searchMatch;
+    return dateMatch && searchMatch;
   });
 
   // Group by unique combination of date and event
@@ -331,7 +291,7 @@ function App() {
     const payload = {
       date: formData.date,
       name: formData.name.trim(),
-      category: isAddingExtra ? formData.category.trim() : formData.category,
+      category: '-',
       type: formData.type,
       amount: amountVal,
       description: formData.description.trim(),
@@ -395,7 +355,7 @@ function App() {
       date: templateDate,
       event: templateEvent.trim(),
       name: name,
-      category: NAME_TO_CATEGORY[name] || 'Lain-lain',
+      category: '-',
       type: 'debet',
       amount: 0,
       description: '-'
@@ -538,16 +498,16 @@ function App() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             
             {/* Filter Group with Search */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1">
-              {/* Global Search Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+              {/* Event Search Bar */}
               <div className="flex flex-col gap-1">
                 <label htmlFor="searchBar" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Cari Transaksi
+                  Cari Event
                 </label>
                 <input
                   id="searchBar"
                   type="text"
-                  placeholder="Cari nama, kategori, ket..."
+                  placeholder="Cari Event..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -555,29 +515,6 @@ function App() {
                   }}
                   className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5"
                 />
-              </div>
-
-              {/* Category Filter */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="categoryFilter" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Kategori
-                </label>
-                <select
-                  id="categoryFilter"
-                  value={filterCategory}
-                  onChange={(e) => {
-                    setFilterCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block w-full p-2.5 font-medium cursor-pointer"
-                >
-                  <option value="Semua">Semua Kategori</option>
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Start Date Filter */}
@@ -617,10 +554,10 @@ function App() {
 
             {/* Actions (Reset, Template & Add) */}
             <div className="flex flex-wrap items-end justify-start sm:justify-end gap-2.5 pt-2 lg:pt-0">
-              {(filterCategory !== 'Semua' || startDate || endDate || searchQuery) && (
+              {(startDate || endDate || searchQuery) && (
                 <button
                   onClick={handleResetFilters}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-lg"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-lg cursor-pointer"
                 >
                   Clear Filter
                 </button>
@@ -787,10 +724,9 @@ function App() {
                     <table className="min-w-full border-collapse text-left">
                       <thead>
                         <tr className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/4">Nama Transaksi</th>
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/6">Kategori</th>
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/6">Debet (Masuk)</th>
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/6">Kredit (Keluar)</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 w-1/3">Nama Transaksi</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/5">Debet (Masuk)</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/5">Kredit (Keluar)</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0">Keterangan</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-center w-28">Aksi</th>
                         </tr>
@@ -800,11 +736,6 @@ function App() {
                           <tr key={row.id} className="hover:bg-slate-50/50">
                             <td className="px-4 py-2 text-sm font-medium text-slate-900 border-r border-b border-slate-200 last:border-r-0">
                               {row.name}
-                            </td>
-                            <td className="px-4 py-2 text-sm border-r border-b border-slate-200 last:border-r-0">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-600">
-                                {row.category}
-                              </span>
                             </td>
                             <td className="px-4 py-2 text-sm text-right font-mono font-medium text-emerald-600 border-r border-b border-slate-200 last:border-r-0">
                               {row.type === 'debet' ? formatCellAmount(row.amount) : '-'}
@@ -834,27 +765,27 @@ function App() {
 
                         {/* Daily Total Row */}
                         <tr className="bg-slate-100/40 font-semibold border-b border-slate-200">
-                          <td colSpan="2" className="px-4 py-2 text-sm text-slate-700">
+                          <td className="px-4 py-2 text-sm text-slate-700">
                             {groupBy === 'event' ? 'Total Event' : 'Total Harian'}
                           </td>
-                          <td className="px-4 py-2 text-sm text-right font-mono text-emerald-700">
+                          <td className="px-4 py-2 text-sm text-right font-mono text-emerald-700 border-l border-slate-200">
                             {formatCellAmount(calculatedDebet)}
                           </td>
-                          <td className="px-4 py-2 text-sm text-right font-mono text-rose-700">
+                          <td className="px-4 py-2 text-sm text-right font-mono text-rose-700 border-l border-slate-200">
                             {formatCellAmount(calculatedKredit)}
                           </td>
-                          <td colSpan="2" className="px-4 py-2"></td>
+                          <td colSpan="2" className="px-4 py-2 border-l border-slate-200"></td>
                         </tr>
 
                         {/* Daily Netto (Saldo Bersih Harian) */}
                         <tr className="bg-slate-50/70 border-b border-slate-200 text-xs font-semibold">
-                          <td colSpan="2" className="px-4 py-2.5 text-slate-500 uppercase tracking-wider">
+                          <td className="px-4 py-2.5 text-slate-500 uppercase tracking-wider">
                             {groupBy === 'event' ? 'Netto Event (Selisih)' : 'Netto Harian (Selisih)'}
                           </td>
-                          <td colSpan="2" className={`px-4 py-2.5 text-center font-mono text-sm font-bold ${calculatedNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <td colSpan="2" className={`px-4 py-2.5 text-center font-mono text-sm font-bold border-l border-slate-200 ${calculatedNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {calculatedNet >= 0 ? '+' : ''}{formatRupiah(calculatedNet)} ({calculatedNet >= 0 ? 'Surplus' : 'Defisit'})
                           </td>
-                          <td colSpan="2" className="px-4 py-2.5"></td>
+                          <td colSpan="2" className="px-4 py-2.5 border-l border-slate-200"></td>
                         </tr>
                       </tbody>
                     </table>
@@ -990,73 +921,43 @@ function App() {
                 />
               </div>
 
-              {/* Grid: Nama Transaksi & Kategori */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Nama Transaksi
-                  </label>
-                  {editingTransaction || isAddingExtra ? (
-                    <input
-                      type="text"
-                      required
-                      disabled={!!editingTransaction}
-                      placeholder="Nama Transaksi"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
-                        editingTransaction ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
-                      }`}
-                    />
-                  ) : (
-                    <select
-                      required
-                      value={formData.name}
-                      onChange={(e) => {
-                        const selectedName = e.target.value;
-                        setFormData({
-                          ...formData,
-                          name: selectedName,
-                          category: NAME_TO_CATEGORY[selectedName] || 'Lain-lain'
-                        });
-                      }}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
-                    >
-                      {TRANSACTION_NAMES.map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Kategori
-                  </label>
-                  {editingTransaction || isAddingExtra ? (
-                    <input
-                      type="text"
-                      required
-                      disabled={!!editingTransaction}
-                      placeholder="Kategori"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
-                        editingTransaction ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
-                      }`}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={formData.category}
-                      className="w-full bg-slate-100 border border-slate-200 text-slate-500 text-sm rounded-lg block p-2.5 cursor-not-allowed font-medium"
-                    />
-                  )}
-                </div>
+              {/* Nama Transaksi */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Nama Transaksi
+                </label>
+                {editingTransaction || isAddingExtra ? (
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingTransaction}
+                    placeholder="Nama Transaksi"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
+                      editingTransaction ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
+                    }`}
+                  />
+                ) : (
+                  <select
+                    required
+                    value={formData.name}
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      setFormData({
+                        ...formData,
+                        name: selectedName
+                      });
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
+                  >
+                    {TRANSACTION_NAMES.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* Nominal */}
