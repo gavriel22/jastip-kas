@@ -69,6 +69,7 @@ function App() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [templateDate, setTemplateDate] = useState(new Date().toISOString().split('T')[0]);
   const [templateEvent, setTemplateEvent] = useState('');
+  const [isAddingExtra, setIsAddingExtra] = useState(false);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -150,18 +151,19 @@ function App() {
     let searchMatch = true;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
+      const eventMatch = tx.event?.toLowerCase().includes(q);
       const nameMatch = tx.name?.toLowerCase().includes(q);
       const catMatch = tx.category?.toLowerCase().includes(q);
       const descMatch = tx.description?.toLowerCase().includes(q);
-      searchMatch = nameMatch || catMatch || descMatch;
+      searchMatch = eventMatch || nameMatch || catMatch || descMatch;
     }
 
     return categoryMatch && dateMatch && searchMatch;
   });
 
-  // Group by date or event
+  // Group by unique combination of date and event
   const groupedTransactions = filteredTransactions.reduce((acc, tx) => {
-    const key = groupBy === 'event' ? (tx.event || 'Umum') : tx.date;
+    const key = `${tx.date}_${tx.event || 'Umum'}`;
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -169,12 +171,20 @@ function App() {
     return acc;
   }, {});
 
-  // Sort groups
+  // Sort groups by key ${date}_${event} depending on selected sort tab
   const sortedGroupKeys = Object.keys(groupedTransactions).sort((a, b) => {
-    if (groupBy === 'date') {
-      return new Date(b) - new Date(a);
+    const [dateA, eventA] = a.split('_');
+    const [dateB, eventB] = b.split('_');
+    
+    if (groupBy === 'event') {
+      const eventComp = eventA.localeCompare(eventB);
+      if (eventComp !== 0) return eventComp;
+      return new Date(dateB) - new Date(dateA);
+    } else {
+      const dateComp = new Date(dateB) - new Date(dateA);
+      if (dateComp !== 0) return dateComp;
+      return eventA.localeCompare(eventB);
     }
-    return a.localeCompare(b);
   });
 
   // Pagination calculations
@@ -208,6 +218,7 @@ function App() {
   // Helper to open modal for adding new transaction
   const handleOpenModal = () => {
     setEditingTransaction(null);
+    setIsAddingExtra(false);
     setFormData({
       date: new Date().toISOString().split('T')[0],
       name: 'Tampungan',
@@ -220,9 +231,26 @@ function App() {
     setIsModalOpen(true);
   };
 
+  // Helper to open modal for adding extra transaction in group header
+  const handleOpenAddExtraModal = (dateStr, eventStr) => {
+    setEditingTransaction(null);
+    setIsAddingExtra(true);
+    setFormData({
+      date: dateStr,
+      event: eventStr,
+      name: '',
+      category: '',
+      type: 'debet',
+      amount: '',
+      description: ''
+    });
+    setIsModalOpen(true);
+  };
+
   // Helper to open modal for editing
   const handleEditClick = (tx) => {
     setEditingTransaction(tx);
+    setIsAddingExtra(false);
     setFormData({
       date: tx.date,
       name: tx.name,
@@ -255,12 +283,37 @@ function App() {
     }
   };
 
-  // Handle Form Submission (POST for new / PUT for edit)
+  // Helper to bulk delete event
+  const handleBulkDeleteEvent = async (dateStr, eventStr) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus semua transaksi pada tanggal ${formatDateHeader(dateStr)} untuk event "${eventStr}"?`)) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/transaksi?date=${encodeURIComponent(dateStr)}&event=${encodeURIComponent(eventStr)}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          setTransactions((prev) => prev.filter((tx) => !(tx.date === dateStr && tx.event === eventStr)));
+        } else {
+          alert('Gagal menghapus event');
+        }
+      } catch (error) {
+        console.error('Error bulk deleting event:', error);
+        alert('Terjadi kesalahan koneksi saat menghapus event.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   // Handle Form Submission (POST for new / PUT for edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name) {
-      alert('Mohon pilih Nama Transaksi');
+    if (!formData.name.trim()) {
+      alert('Mohon isi/pilih Nama Transaksi');
+      return;
+    }
+    if (isAddingExtra && !formData.category.trim()) {
+      alert('Mohon isi Kategori');
       return;
     }
     const amountVal = parseFloat(formData.amount);
@@ -277,8 +330,8 @@ function App() {
 
     const payload = {
       date: formData.date,
-      name: formData.name,
-      category: formData.category,
+      name: formData.name.trim(),
+      category: isAddingExtra ? formData.category.trim() : formData.category,
       type: formData.type,
       amount: amountVal,
       description: formData.description.trim(),
@@ -393,10 +446,8 @@ function App() {
   };
 
   const formatGroupHeader = (key) => {
-    if (groupBy === 'event') {
-      return `Event: ${key}`;
-    }
-    return formatDateHeader(key);
+    const [datePart, eventPart] = key.split('_');
+    return `Tanggal: ${formatDateHeader(datePart)} | Event: ${eventPart}`;
   };
 
   return (
@@ -428,8 +479,8 @@ function App() {
               Pencatatan Buku Kas & Ledger Harian Internal
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-100 px-3 py-1.5 rounded border border-slate-200 self-start md:self-auto">
-            <span>Author: Gavriel Theofilus Nugroho</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 bg-slate-100 px-3 py-1.5 rounded border border-slate-200 self-start md:self-auto">
+            <span>Mutasi Kas Jastip v1.1</span>
           </div>
         </div>
       </header>
@@ -701,11 +752,34 @@ function App() {
               return (
                 <div key={groupKey} className="flex flex-col gap-2.5">
                   {/* Group Header */}
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    <h3 className="font-semibold text-slate-700 text-sm tracking-tight">
-                      {formatGroupHeader(groupKey)}
-                    </h3>
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                      <h3 className="font-semibold text-slate-700 text-sm tracking-tight">
+                        {formatGroupHeader(groupKey)}
+                      </h3>
+                    </div>
+                    {/* Group Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const [datePart, eventPart] = groupKey.split('_');
+                          handleOpenAddExtraModal(datePart, eventPart);
+                        }}
+                        className="px-2.5 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded cursor-pointer"
+                      >
+                        + Tambah Transaksi
+                      </button>
+                      <button
+                        onClick={() => {
+                          const [datePart, eventPart] = groupKey.split('_');
+                          handleBulkDeleteEvent(datePart, eventPart);
+                        }}
+                        className="px-2.5 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer"
+                      >
+                        Hapus Event
+                      </button>
+                    </div>
                   </div>
 
                   {/* Excel-like Table */}
@@ -874,9 +948,12 @@ function App() {
                   <input
                     type="date"
                     required
+                    disabled={!!editingTransaction || isAddingExtra}
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                    className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
+                      (editingTransaction || isAddingExtra) ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
+                    }`}
                   />
                 </div>
 
@@ -895,47 +972,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Grid: Nama Transaksi & Kategori */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Nama Transaksi
-                  </label>
-                  <select
-                    required
-                    value={formData.name}
-                    onChange={(e) => {
-                      const selectedName = e.target.value;
-                      setFormData({
-                        ...formData,
-                        name: selectedName,
-                        category: NAME_TO_CATEGORY[selectedName]
-                      });
-                    }}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
-                  >
-                    {TRANSACTION_NAMES.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Kategori (Otomatis)
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    value={formData.category}
-                    className="w-full bg-slate-100 border border-slate-200 text-slate-500 text-sm rounded-lg block p-2.5 cursor-not-allowed font-medium"
-                  />
-                </div>
-              </div>
-
               {/* Event Input */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -945,10 +981,82 @@ function App() {
                   type="text"
                   required
                   placeholder="Misal: Jastip SG Mei"
+                  disabled={!!editingTransaction || isAddingExtra}
                   value={formData.event}
                   onChange={(e) => setFormData({ ...formData, event: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                  className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
+                    (editingTransaction || isAddingExtra) ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
+                  }`}
                 />
+              </div>
+
+              {/* Grid: Nama Transaksi & Kategori */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Nama Transaksi
+                  </label>
+                  {editingTransaction || isAddingExtra ? (
+                    <input
+                      type="text"
+                      required
+                      disabled={!!editingTransaction}
+                      placeholder="Nama Transaksi"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
+                        editingTransaction ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
+                      }`}
+                    />
+                  ) : (
+                    <select
+                      required
+                      value={formData.name}
+                      onChange={(e) => {
+                        const selectedName = e.target.value;
+                        setFormData({
+                          ...formData,
+                          name: selectedName,
+                          category: NAME_TO_CATEGORY[selectedName] || 'Lain-lain'
+                        });
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 cursor-pointer"
+                    >
+                      {TRANSACTION_NAMES.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Kategori
+                  </label>
+                  {editingTransaction || isAddingExtra ? (
+                    <input
+                      type="text"
+                      required
+                      disabled={!!editingTransaction}
+                      placeholder="Kategori"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className={`w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5 ${
+                        editingTransaction ? 'cursor-not-allowed bg-slate-100 text-slate-400' : ''
+                      }`}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      value={formData.category}
+                      className="w-full bg-slate-100 border border-slate-200 text-slate-500 text-sm rounded-lg block p-2.5 cursor-not-allowed font-medium"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Nominal */}
@@ -1033,20 +1141,6 @@ function App() {
 
             {/* Modal Form */}
             <form onSubmit={handleTemplateSubmit} className="p-6 flex flex-col gap-4">
-              {/* Tanggal */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Tanggal
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={templateDate}
-                  onChange={(e) => setTemplateDate(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
-                />
-              </div>
-
               {/* Event */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -1058,6 +1152,20 @@ function App() {
                   placeholder="Misal: Jastip SG Mei"
                   value={templateEvent}
                   onChange={(e) => setTemplateEvent(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                />
+              </div>
+
+              {/* Tanggal */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Tanggal
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={templateDate}
+                  onChange={(e) => setTemplateDate(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
                 />
               </div>

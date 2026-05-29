@@ -127,21 +127,37 @@ export default async function handler(req, res) {
       return res.status(200).json(updated);
     }
 
-    // HTTP DELETE - Remove a transaction
+    // HTTP DELETE - Remove transaction(s)
     if (req.method === 'DELETE') {
       const id = req.query.id || req.body?.id;
-      if (!id) {
-        return res.status(400).json({ error: 'ID transaksi diperlukan untuk menghapus data' });
+      const tanggal = req.query.tanggal || req.query.date || req.body?.tanggal || req.body?.date;
+      const event = req.query.event || req.body?.event;
+
+      if (id) {
+        // Single Delete
+        const result = await sql`
+          DELETE FROM transaksi
+          WHERE id = ${Number(id)}
+          RETURNING *
+        `;
+        if (result.length === 0) {
+          return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
+        }
+        return res.status(200).json({ success: true, message: 'Transaksi berhasil dihapus' });
+      } else if (tanggal && event) {
+        // Bulk Delete by Date & Event
+        const result = await sql`
+          DELETE FROM transaksi
+          WHERE tanggal = ${tanggal} AND event = ${event}
+          RETURNING *
+        `;
+        return res.status(200).json({
+          success: true,
+          message: `Berhasil menghapus ${result.length} transaksi untuk Event "${event}" pada Tanggal ${tanggal}`
+        });
+      } else {
+        return res.status(400).json({ error: 'ID transaksi atau kombinasi Tanggal & Event diperlukan untuk menghapus data' });
       }
-      const result = await sql`
-        DELETE FROM transaksi
-        WHERE id = ${Number(id)}
-        RETURNING *
-      `;
-      if (result.length === 0) {
-        return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
-      }
-      return res.status(200).json({ success: true, message: 'Transaksi berhasil dihapus' });
     }
 
     // HTTP 405 Method Not Allowed
