@@ -1,4 +1,3 @@
-// Author: Gavriel Theofilus Nugroho
 
 import { neon } from '@neondatabase/serverless';
 
@@ -36,28 +35,62 @@ export default async function handler(req, res) {
       return res.status(200).json(transactions);
     }
 
-    // HTTP POST - Add a new transaction
+    // HTTP POST - Add a new transaction (Single or Bulk)
     if (req.method === 'POST') {
-      const { date, event, name, category, type, amount, description } = req.body;
-      if (!date || !event || !name || !category || !type || amount === undefined) {
-        return res.status(400).json({ error: 'Data tidak lengkap untuk menambahkan transaksi' });
+      if (Array.isArray(req.body)) {
+        // Bulk Insert validation
+        for (const item of req.body) {
+          const { date, event, name, category, type, amount } = item;
+          if (!date || !event || !name || !category || !type || amount === undefined) {
+            return res.status(400).json({ error: 'Data tidak lengkap untuk salah satu transaksi dalam batch' });
+          }
+        }
+
+        // Execute parallel inserts using Promise.all
+        const insertPromises = req.body.map(async (item) => {
+          const { date, event, name, category, type, amount, description } = item;
+          const result = await sql`
+            INSERT INTO transaksi (tanggal, event, nama_transaksi, kategori, jenis, nominal, keterangan)
+            VALUES (${date}, ${event}, ${name}, ${category}, ${type}, ${amount}, ${description || ''})
+            RETURNING *
+          `;
+          return {
+            id: result[0].id.toString(),
+            date: result[0].tanggal,
+            event: result[0].event,
+            name: result[0].nama_transaksi,
+            category: result[0].kategori,
+            type: result[0].jenis,
+            amount: Number(result[0].nominal),
+            description: result[0].keterangan || ''
+          };
+        });
+
+        const createdItems = await Promise.all(insertPromises);
+        return res.status(201).json(createdItems);
+      } else {
+        // Single Insert
+        const { date, event, name, category, type, amount, description } = req.body;
+        if (!date || !event || !name || !category || !type || amount === undefined) {
+          return res.status(400).json({ error: 'Data tidak lengkap untuk menambahkan transaksi' });
+        }
+        const result = await sql`
+          INSERT INTO transaksi (tanggal, event, nama_transaksi, kategori, jenis, nominal, keterangan)
+          VALUES (${date}, ${event}, ${name}, ${category}, ${type}, ${amount}, ${description || ''})
+          RETURNING *
+        `;
+        const created = {
+          id: result[0].id.toString(),
+          date: result[0].tanggal,
+          event: result[0].event,
+          name: result[0].nama_transaksi,
+          category: result[0].kategori,
+          type: result[0].jenis,
+          amount: Number(result[0].nominal),
+          description: result[0].keterangan || ''
+        };
+        return res.status(201).json(created);
       }
-      const result = await sql`
-        INSERT INTO transaksi (tanggal, event, nama_transaksi, kategori, jenis, nominal, keterangan)
-        VALUES (${date}, ${event}, ${name}, ${category}, ${type}, ${amount}, ${description || ''})
-        RETURNING *
-      `;
-      const created = {
-        id: result[0].id.toString(),
-        date: result[0].tanggal,
-        event: result[0].event,
-        name: result[0].nama_transaksi,
-        category: result[0].kategori,
-        type: result[0].jenis,
-        amount: Number(result[0].nominal),
-        description: result[0].keterangan || ''
-      };
-      return res.status(201).json(created);
     }
 
     // HTTP PUT - Update an existing transaction

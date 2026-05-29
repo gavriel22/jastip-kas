@@ -1,4 +1,3 @@
-// Author: Gavriel Theofilus Nugroho
 
 import { useState, useEffect } from 'react';
 
@@ -67,6 +66,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null); // null for add, object for edit
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [templateDate, setTemplateDate] = useState(new Date().toISOString().split('T')[0]);
+  const [templateEvent, setTemplateEvent] = useState('');
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -254,6 +256,7 @@ function App() {
   };
 
   // Handle Form Submission (POST for new / PUT for edit)
+  // Handle Form Submission (POST for new / PUT for edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name) {
@@ -261,8 +264,12 @@ function App() {
       return;
     }
     const amountVal = parseFloat(formData.amount);
-    if (isNaN(amountVal) || amountVal <= 0) {
-      alert('Mohon masukkan nominal uang yang valid (lebih besar dari 0)');
+    if (isNaN(amountVal) || (editingTransaction ? amountVal < 0 : amountVal <= 0)) {
+      alert(
+        editingTransaction
+          ? 'Mohon masukkan nominal uang yang valid (lebih besar dari atau sama dengan 0)'
+          : 'Mohon masukkan nominal uang yang valid (lebih besar dari 0)'
+      );
       return;
     }
 
@@ -320,6 +327,52 @@ function App() {
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('Terjadi kesalahan koneksi saat menyimpan transaksi.');
+    }
+  };
+
+  // Handle Daily Template Creation (Bulk Insert POST)
+  const handleTemplateSubmit = async (e) => {
+    e.preventDefault();
+    if (!templateEvent.trim()) {
+      alert('Mohon isi nama Event');
+      return;
+    }
+
+    const payload = TRANSACTION_NAMES.map((name) => ({
+      date: templateDate,
+      event: templateEvent.trim(),
+      name: name,
+      category: NAME_TO_CATEGORY[name] || 'Lain-lain',
+      type: 'debet',
+      amount: 0,
+      description: '-'
+    }));
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/transaksi', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.status === 201) {
+        const newCreatedTransactions = await response.json();
+        setTransactions((prev) => [...newCreatedTransactions, ...prev]);
+        setIsTemplateModalOpen(false);
+        setTemplateEvent('');
+        setCurrentPage(1);
+      } else {
+        const errorData = await response.json();
+        alert(`Gagal membuat template harian: ${errorData.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (error) {
+      console.error('Error creating template:', error);
+      alert('Terjadi kesalahan koneksi saat membuat template harian.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -511,8 +564,8 @@ function App() {
               </div>
             </div>
 
-            {/* Actions (Reset & Add) */}
-            <div className="flex items-end justify-start sm:justify-end gap-2.5 pt-2 lg:pt-0">
+            {/* Actions (Reset, Template & Add) */}
+            <div className="flex flex-wrap items-end justify-start sm:justify-end gap-2.5 pt-2 lg:pt-0">
               {(filterCategory !== 'Semua' || startDate || endDate || searchQuery) && (
                 <button
                   onClick={handleResetFilters}
@@ -521,6 +574,31 @@ function App() {
                   Clear Filter
                 </button>
               )}
+
+              <button
+                onClick={() => {
+                  setTemplateDate(new Date().toISOString().split('T')[0]);
+                  setTemplateEvent('');
+                  setIsTemplateModalOpen(true);
+                }}
+                className="flex items-center justify-center gap-2 border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-sm active:scale-[0.98] w-full sm:w-auto cursor-pointer"
+              >
+                <svg
+                  className="w-4 h-4 text-slate-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                  />
+                </svg>
+                Buat Template Harian
+              </button>
               
               <button
                 onClick={handleOpenModal}
@@ -881,7 +959,7 @@ function App() {
                 <input
                   type="number"
                   required
-                  min="1"
+                  min={editingTransaction ? "0" : "1"}
                   placeholder="Misal: 150000"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -916,6 +994,88 @@ function App() {
                   className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
                 >
                   {editingTransaction ? 'Simpan Perubahan' : 'Simpan Transaksi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up Template Modal Form */}
+      {isTemplateModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden transform">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                Buat Template Harian
+              </h3>
+              <button
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleTemplateSubmit} className="p-6 flex flex-col gap-4">
+              {/* Tanggal */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Tanggal
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={templateDate}
+                  onChange={(e) => setTemplateDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                />
+              </div>
+
+              {/* Event */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Event
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Misal: Jastip SG Mei"
+                  value={templateEvent}
+                  onChange={(e) => setTemplateEvent(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-slate-400 focus:border-slate-400 block p-2.5"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsTemplateModalOpen(false)}
+                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs px-4 py-2.5 rounded-lg"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
+                >
+                  Buat Template
                 </button>
               </div>
             </form>
