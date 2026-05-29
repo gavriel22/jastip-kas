@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 const TRANSACTION_NAMES = [
@@ -52,6 +51,7 @@ function App() {
 
   // Fetch transactions on load
   const fetchTransactions = async () => {
+    await Promise.resolve();
     setIsLoading(true);
     try {
       const response = await fetch('/api/transaksi');
@@ -557,7 +557,7 @@ function App() {
               {(startDate || endDate || searchQuery) && (
                 <button
                   onClick={handleResetFilters}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-lg cursor-pointer"
+                  className="text-xs font-bold text-slate-500 bg-slate-100 px-4 py-2.5 rounded-lg cursor-pointer"
                 >
                   Clear Filter
                 </button>
@@ -569,7 +569,7 @@ function App() {
                   setTemplateEvent('');
                   setIsTemplateModalOpen(true);
                 }}
-                className="flex items-center justify-center gap-2 border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-sm active:scale-[0.98] w-full sm:w-auto cursor-pointer"
+                className="flex items-center justify-center gap-2 border border-slate-300 bg-white text-slate-700 font-semibold text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto cursor-pointer"
               >
                 <svg
                   className="w-4 h-4 text-slate-500"
@@ -590,7 +590,7 @@ function App() {
               
               <button
                 onClick={handleOpenModal}
-                className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm active:scale-[0.98] w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 bg-slate-900 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
               >
                 <svg
                   className="w-4 h-4"
@@ -617,14 +617,14 @@ function App() {
         <div className="flex border-b border-slate-200 gap-6 mt-2 mb-1 px-1">
           <button
             onClick={() => { setGroupBy('date'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-semibold relative ${groupBy === 'date' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-sm font-semibold relative ${groupBy === 'date' ? 'text-slate-900' : 'text-slate-400'}`}
           >
             Per Hari (Tanggal)
             {groupBy === 'date' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>}
           </button>
           <button
             onClick={() => { setGroupBy('event'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-semibold relative ${groupBy === 'event' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-sm font-semibold relative ${groupBy === 'event' ? 'text-slate-900' : 'text-slate-400'}`}
           >
             Per Event
             {groupBy === 'event' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>}
@@ -661,7 +661,7 @@ function App() {
               </p>
               <button
                 onClick={handleResetFilters}
-                className="mt-4 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300 px-3.5 py-2 rounded-md bg-slate-50"
+                className="mt-4 text-xs font-semibold text-slate-600 border border-slate-200 px-3.5 py-2 rounded-md bg-slate-50"
               >
                 Reset Semua Filter
               </button>
@@ -703,7 +703,7 @@ function App() {
                           const [datePart, eventPart] = groupKey.split('_');
                           handleOpenAddExtraModal(datePart, eventPart);
                         }}
-                        className="px-2.5 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold bg-blue-600 text-white rounded cursor-pointer"
                       >
                         + Tambah Transaksi
                       </button>
@@ -712,7 +712,7 @@ function App() {
                           const [datePart, eventPart] = groupKey.split('_');
                           handleBulkDeleteEvent(datePart, eventPart);
                         }}
-                        className="px-2.5 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold bg-red-600 text-white rounded cursor-pointer"
                       >
                         Hapus Event
                       </button>
@@ -728,12 +728,12 @@ function App() {
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/5">Debet (Masuk)</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-right w-1/5">Kredit (Keluar)</th>
                           <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0">Keterangan</th>
-                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-center w-28">Aksi</th>
+                          <th className="px-4 py-2 text-xs font-semibold text-slate-600 border-r border-slate-200 last:border-r-0 text-center w-44">Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rowsToRender.map((row) => (
-                          <tr key={row.id} className="hover:bg-slate-50/50">
+                          <tr key={row.id} className="">
                             <td className="px-4 py-2 text-sm font-medium text-slate-900 border-r border-b border-slate-200 last:border-r-0">
                               {row.name}
                             </td>
@@ -746,19 +746,21 @@ function App() {
                             <td className="px-4 py-2 text-xs text-slate-500 italic border-b border-slate-200 last:border-r-0">
                               {row.description || '-'}
                             </td>
-                            <td className="px-4 py-2 text-xs border-b border-slate-200 last:border-r-0 text-center">
-                              <button
-                                onClick={() => handleEditClick(row)}
-                                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded cursor-pointer mr-1.5"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(row.id)}
-                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded cursor-pointer"
-                              >
-                                Hapus
-                              </button>
+                            <td className="px-4 py-2 text-xs border-b border-slate-200 last:border-r-0">
+                              <div className="flex flex-row items-center justify-center gap-4">
+                                <button
+                                  onClick={() => handleEditClick(row)}
+                                  className="bg-slate-100 text-slate-700 font-semibold px-4 py-2 rounded-md cursor-pointer whitespace-nowrap"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(row.id)}
+                                  className="bg-rose-50 text-rose-700 font-semibold px-4 py-2 rounded-md cursor-pointer whitespace-nowrap"
+                                >
+                                  Hapus
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -807,7 +809,7 @@ function App() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md"
+                className="text-xs font-semibold text-slate-600 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-md"
               >
                 Sebelumnya
               </button>
@@ -817,7 +819,7 @@ function App() {
                   <button
                     key={idx + 1}
                     onClick={() => setCurrentPage(idx + 1)}
-                    className={`w-7 h-7 text-xs font-semibold rounded-md flex items-center justify-center ${currentPage === idx + 1 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    className={`w-7 h-7 text-xs font-semibold rounded-md flex items-center justify-center ${currentPage === idx + 1 ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
                   >
                     {idx + 1}
                   </button>
@@ -827,7 +829,7 @@ function App() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 px-3 py-2 rounded-md"
+                className="text-xs font-semibold text-slate-600 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-md"
               >
                 Selanjutnya
               </button>
@@ -848,7 +850,7 @@ function App() {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400"
               >
                 <svg
                   className="w-5 h-5"
@@ -994,13 +996,13 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs px-4 py-2.5 rounded-lg"
+                  className="text-slate-600 font-medium text-xs px-4 py-2.5 rounded-lg"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
+                  className="bg-slate-900 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
                 >
                   {editingTransaction ? 'Simpan Perubahan' : 'Simpan Transaksi'}
                 </button>
@@ -1021,7 +1023,7 @@ function App() {
               </h3>
               <button
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400"
               >
                 <svg
                   className="w-5 h-5"
@@ -1076,13 +1078,13 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setIsTemplateModalOpen(false)}
-                  className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs px-4 py-2.5 rounded-lg"
+                  className="text-slate-600 font-medium text-xs px-4 py-2.5 rounded-lg"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
+                  className="bg-slate-900 text-white font-medium text-xs px-5 py-2.5 rounded-lg"
                 >
                   Buat Template
                 </button>
